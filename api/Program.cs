@@ -23,6 +23,7 @@ builder.Services.AddScoped<DevDataSeeder>();
 // scoped like DbContext - one per request
 builder.Services.AddScoped<IOutageService, OutageService>();
 builder.Services.AddScoped<IWorkOrderService, WorkOrderService>();
+builder.Services.AddScoped<ICrewService, CrewService>();
 builder.Services.AddSingleton(TimeProvider.System);
 
 // validation error keys use JSON names (pageSize not PageSize)
