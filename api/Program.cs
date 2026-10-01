@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Text.Json.Serialization;
+using GridOps.Api.Common.Errors;
 using GridOps.Api.Data;
 using GridOps.Api.Data.Seeding;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +17,14 @@ builder.Services.AddDbContext<GridOpsDbContext>(options =>
 
 builder.Services.AddScoped<DevDataSeeder>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+// every error response is ProblemDetails (RFC 9457) + traceId to match logs
+builder.Services.AddProblemDetails(options =>
+    options.CustomizeProblemDetails = ctx =>
+        ctx.ProblemDetails.Extensions["traceId"] = Activity.Current?.Id ?? ctx.HttpContext.TraceIdentifier);
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<GridOpsDbContext>("database");
@@ -32,6 +42,9 @@ if (args.Contains("seed"))
     await seeder.SeedAsync(app.Configuration.GetValue("outages", 500));
     return;
 }
+
+app.UseExceptionHandler();
+app.UseStatusCodePages(); // empty 404/405 etc -> ProblemDetails
 
 if (app.Environment.IsDevelopment())
 {
