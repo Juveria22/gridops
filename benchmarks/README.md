@@ -43,3 +43,19 @@ Then `dotnet ef database update --project api --connection "<bench connection st
 | all_newest | 18.28 | 10,406 |
 
 Every query is a full clustered index scan (whole table).
+
+### After `AddOutageIndexes`
+
+| Query | Avg ms | Logical reads | Index used |
+|---|---|---|---|
+| active_by_borough | 0.09 | 108 | `IX_Outages_Status_ReportedAt` |
+| active_by_borough_count | 1.65 | 225 | `IX_Outages_Status_ReportedAt` (Borough included) |
+| recent_high_priority | 0.24 | 438 | `IX_Outages_Priority_ReportedAt` |
+| recent_high_priority_count | 0.37 | 42 | `IX_Outages_Priority_ReportedAt` |
+| all_newest | 0.09 | 83 | `IX_Outages_ReportedAt` |
+
+### Summary
+
+- active outages by borough (list + count = one dashboard load): 17.9 ms -> 1.7 ms (~10x), 20,812 -> 333 pages read (-98%)
+- newest-first default view: 18.3 ms -> 0.09 ms
+- all queries went from full table scans to index seeks

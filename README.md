@@ -37,7 +37,17 @@ Prerequisites: .NET 10 SDK, Node 22+, Docker Desktop (WSL 2 backend on Windows).
      --project api
    ```
 
-3. **Run the API**
+3. **Create the database and seed dev data**
+
+   ```bash
+   dotnet tool restore                          # installs dotnet-ef (pinned in dotnet-tools.json)
+   dotnet ef database update --project api      # applies migrations, creates GridOps db
+   dotnet run --project api -- seed             # ~500 outages across NYC boroughs (Development only)
+   ```
+
+   Seed is skipped if outages already exist. `--outages N` for a different size.
+
+4. **Run the API**
 
    ```bash
    dotnet run --project api --launch-profile http
@@ -46,3 +56,16 @@ Prerequisites: .NET 10 SDK, Node 22+, Docker Desktop (WSL 2 backend on Windows).
    - Swagger UI: http://localhost:5257/swagger
    - OpenAPI document: http://localhost:5257/openapi/v1.json
    - Health (includes a database check): http://localhost:5257/health
+
+## Data model
+
+- **Outage**: borough, neighborhood, customers affected, status, priority, reported/resolved times. Has many work orders.
+- **WorkOrder**: belongs to one outage, optionally assigned to one crew.
+- **Crew**: field team with a home borough. Has members (users) and work orders.
+- **User**: dispatcher or crew member. Auth added in phase 4.
+
+Enums are stored as strings. All timestamps are UTC `datetimeoffset`.
+
+## Performance
+
+Composite indexes on the dashboard filters cut the main dashboard query from 17.9 ms to 1.7 ms and pages read by 98% on 200k outages. Method and numbers in [benchmarks/README.md](benchmarks/README.md).
