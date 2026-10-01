@@ -11,6 +11,9 @@ public class WorkOrderConfiguration : IEntityTypeConfiguration<WorkOrder>
         builder.Property(w => w.Title).HasMaxLength(200);
         builder.Property(w => w.Notes).HasMaxLength(2000);
 
+        // crew view: "my open work orders". also covers the CrewId FK
+        builder.HasIndex(w => new { w.CrewId, w.Status });
+
         // deleting a crew unassigns its work orders instead of deleting them
         builder.HasOne(w => w.Crew)
             .WithMany(c => c.WorkOrders)
