@@ -4,6 +4,8 @@ using GridOps.Api.Common.Errors;
 using GridOps.Api.Data;
 using GridOps.Api.Data.Seeding;
 using GridOps.Api.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,7 +24,8 @@ builder.Services.AddScoped<DevDataSeeder>();
 builder.Services.AddScoped<IOutageService, OutageService>();
 builder.Services.AddSingleton(TimeProvider.System);
 
-builder.Services.AddControllers()
+// validation error keys use JSON names (pageSize not PageSize)
+builder.Services.AddControllers(o => o.ModelMetadataDetailsProviders.Add(new SystemTextJsonValidationMetadataProvider()))
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // every error response is ProblemDetails (RFC 9457) + traceId to match logs
@@ -30,6 +33,7 @@ builder.Services.AddProblemDetails(options =>
     options.CustomizeProblemDetails = ctx =>
         ctx.ProblemDetails.Extensions["traceId"] = Activity.Current?.Id ?? ctx.HttpContext.TraceIdentifier);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.Configure<ApiBehaviorOptions>(o => o.InvalidModelStateResponseFactory = ValidationResponse.Create);
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<GridOpsDbContext>("database");
