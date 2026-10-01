@@ -66,6 +66,41 @@ Prerequisites: .NET 10 SDK, Node 22+, Docker Desktop (WSL 2 backend on Windows).
 
 Enums are stored as strings. All timestamps are UTC `datetimeoffset`.
 
+## API
+
+| Method | Route | Notes |
+|---|---|---|
+| GET | `/api/outages` | filters: `status`, `priority`, `borough` (repeatable), `from`, `to`. `sortBy` = reportedAt / priority / customersAffected, `sortDir`, `page`, `pageSize` (max 100) |
+| GET | `/api/outages/{id}` | includes work orders |
+| POST | `/api/outages` | 201 + Location |
+| PATCH | `/api/outages/{id}/status` | 409 if already resolved or work orders still open |
+| GET | `/api/work-orders` | filters: `status`, `crewId`, `outageId` + paging |
+| GET | `/api/work-orders/{id}` | |
+| POST | `/api/outages/{id}/work-orders` | 409 if outage resolved |
+| PUT | `/api/work-orders/{id}/crew` | `{ "crewId": 5 }` or `null` to unassign |
+| PATCH | `/api/work-orders/{id}/status` | InProgress/Completed need a crew. Completed/Cancelled are final |
+| GET | `/api/crews` | `borough`, `includeInactive`. includes open work count |
+
+Example: `GET /api/outages?status=Reported&status=Restoring&borough=Brooklyn&sortBy=priority&page=1`
+
+Paged responses: `{ items, page, pageSize, totalCount, totalPages }`
+
+### Errors
+
+All errors are [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457) with a `traceId` that matches the server logs.
+
+| Status | When |
+|---|---|
+| 400 | validation failed. `errors` has camelCase field names |
+| 404 | resource not found |
+| 409 | valid request but breaks a business rule (e.g. resolving with open work orders) |
+| 500 | unexpected. no internals outside Development |
+
+```json
+{ "status": 400, "title": "One or more validation errors occurred.",
+  "errors": { "pageSize": ["The field PageSize must be between 1 and 100."] }, "traceId": "00-..." }
+```
+
 ## Performance
 
 Composite indexes on the dashboard filters cut the main dashboard query from 17.9 ms to 1.7 ms and pages read by 98% on 200k outages. Method and numbers in [benchmarks/README.md](benchmarks/README.md).
