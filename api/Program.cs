@@ -29,6 +29,8 @@ builder.Services.AddSingleton(TimeProvider.System);
 // validation error keys use JSON names (pageSize not PageSize)
 builder.Services.AddControllers(o => o.ModelMetadataDetailsProviders.Add(new SystemTextJsonValidationMetadataProvider()))
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+// OpenAPI generator reads these options, not the MVC ones above - without it enums show as integers in the spec
+builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // every error response is ProblemDetails (RFC 9457) + traceId to match logs
 builder.Services.AddProblemDetails(options =>
