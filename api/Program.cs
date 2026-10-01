@@ -1,4 +1,5 @@
 using GridOps.Api.Data;
+using GridOps.Api.Data.Seeding;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,12 +12,26 @@ var connectionString = builder.Configuration.GetConnectionString("GridOps")
 builder.Services.AddDbContext<GridOpsDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+builder.Services.AddScoped<DevDataSeeder>();
+
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<GridOpsDbContext>("database");
 
 var app = builder.Build();
+
+// dotnet run --project api -- seed [--outages 500]
+if (args.Contains("seed"))
+{
+    if (!app.Environment.IsDevelopment())
+        throw new InvalidOperationException("Seeding is only allowed in Development.");
+
+    using var scope = app.Services.CreateScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<DevDataSeeder>();
+    await seeder.SeedAsync(app.Configuration.GetValue("outages", 500));
+    return;
+}
 
 if (app.Environment.IsDevelopment())
 {
