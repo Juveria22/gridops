@@ -196,7 +196,8 @@ public class DevDataSeeder(GridOpsDbContext db, ILogger<DevDataSeeder> logger)
             Title = title,
             Status = status,
             Priority = outage.Priority,
-            Crew = status == WorkOrderStatus.Open ? null : crew,
+            // set FK not navigation - crew is detached after ChangeTracker.Clear()
+            CrewId = status == WorkOrderStatus.Open ? null : crew.Id,
             CompletedAt = status == WorkOrderStatus.Completed ? outage.ResolvedAt ?? createdAt.AddHours(2) : null,
             CreatedAt = createdAt,
             UpdatedAt = createdAt,
