@@ -48,14 +48,16 @@ Every query is a full clustered index scan (whole table).
 
 | Query | Avg ms | Logical reads | Index used |
 |---|---|---|---|
-| active_by_borough | 0.09 | 108 | `IX_Outages_Status_ReportedAt` |
-| active_by_borough_count | 1.65 | 225 | `IX_Outages_Status_ReportedAt` (Borough included) |
-| recent_high_priority | 0.24 | 438 | `IX_Outages_Priority_ReportedAt` |
-| recent_high_priority_count | 0.37 | 42 | `IX_Outages_Priority_ReportedAt` |
-| all_newest | 0.09 | 83 | `IX_Outages_ReportedAt` |
+| active_by_borough | 0.09 | 108 | `IX_Outages_Borough_ReportedAt` seek + key lookups |
+| active_by_borough_count | 1.65 | 225 | `IX_Outages_Status_ReportedAt` seek (Borough included, no lookups) |
+| recent_high_priority | 0.24 | 438 | `IX_Outages_ReportedAt` seek + key lookups |
+| recent_high_priority_count | 0.37 | 42 | `IX_Outages_Priority_ReportedAt` seek |
+| all_newest | 0.09 | 83 | `IX_Outages_ReportedAt` ordered scan, stops after 25 rows |
 
 ### Summary
 
 - active outages by borough (list + count = one dashboard load): 17.9 ms -> 1.7 ms (~10x), 20,812 -> 333 pages read (-98%)
 - newest-first default view: 18.3 ms -> 0.09 ms
-- all queries went from full table scans to index seeks
+- no query scans the whole table anymore
+- index used = actual cached plan (`sys.dm_exec_query_plan`), not assumed
+- TOP 25 list queries: optimizer prefers an index already sorted by ReportedAt so it can stop after 25 matches. counts use the narrower equality-first index
