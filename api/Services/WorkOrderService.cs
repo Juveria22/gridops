@@ -1,3 +1,4 @@
+using GridOps.Api.Auth;
 using GridOps.Api.Common.Errors;
 using GridOps.Api.Common.Paging;
 using GridOps.Api.Contracts.WorkOrders;
@@ -16,11 +17,21 @@ public interface IWorkOrderService
     Task UpdateStatusAsync(int id, WorkOrderStatus status, CancellationToken ct);
 }
 
-public class WorkOrderService(GridOpsDbContext db, TimeProvider clock) : IWorkOrderService
+public class WorkOrderService(GridOpsDbContext db, TimeProvider clock, ICurrentUser currentUser) : IWorkOrderService
 {
+    // every read/update goes through this. crew -> own crew's work only
+    private IQueryable<WorkOrder> Visible()
+    {
+        if (currentUser.IsDispatcher) return db.WorkOrders;
+
+        // crew user not on a crew sees nothing (not the unassigned ones)
+        var crewId = currentUser.CrewId;
+        return crewId is null ? db.WorkOrders.Where(_ => false) : db.WorkOrders.Where(w => w.CrewId == crewId);
+    }
+
     public async Task<PagedResult<WorkOrderDto>> ListAsync(WorkOrderQuery query, CancellationToken ct)
     {
-        var workOrders = db.WorkOrders.AsNoTracking();
+        var workOrders = Visible().AsNoTracking();
 
         if (query.Status is { Length: > 0 })
             workOrders = workOrders.Where(w => query.Status.Contains(w.Status));
@@ -46,7 +57,8 @@ public class WorkOrderService(GridOpsDbContext db, TimeProvider clock) : IWorkOr
 
     public async Task<WorkOrderDto> GetAsync(int id, CancellationToken ct)
     {
-        var workOrder = await db.WorkOrders
+        // other crew's work order -> 404, don't confirm it exists
+        var workOrder = await Visible()
             .AsNoTracking()
             .Where(w => w.Id == id)
             .Select(Projections.WorkOrder)
@@ -113,6 +125,9 @@ public class WorkOrderService(GridOpsDbContext db, TimeProvider clock) : IWorkOr
 
         EnsureNotFinished(workOrder);
 
+        if (!currentUser.IsDispatcher && status is not (WorkOrderStatus.InProgress or WorkOrderStatus.Completed))
+            throw new ForbiddenException("Crew members can only start or complete work orders.");
+
         // Open/Assigned follow crew assignment - set via the crew endpoint
         if (status is WorkOrderStatus.Open or WorkOrderStatus.Assigned)
             throw new ConflictException($"Status '{status}' is set by assigning or unassigning a crew.");
@@ -128,7 +143,7 @@ public class WorkOrderService(GridOpsDbContext db, TimeProvider clock) : IWorkOr
     }
 
     private async Task<WorkOrder> FindTracked(int id, CancellationToken ct) =>
-        await db.WorkOrders.FirstOrDefaultAsync(w => w.Id == id, ct)
+        await Visible().FirstOrDefaultAsync(w => w.Id == id, ct)
         ?? throw new NotFoundException("Work order", id);
 
     private static void EnsureNotFinished(WorkOrder workOrder)
