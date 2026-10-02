@@ -3,6 +3,7 @@
     <h1>Outages</h1>
     <p class="subtitle">{{ result().totalCount | number }} matching</p>
   </div>
+  <button mat-flat-button (click)="newOutage()"><mat-icon>add</mat-icon> New outage</button>
 </header>
 
 <form [formGroup]="form" class="filters">

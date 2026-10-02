@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -41,6 +42,7 @@ import {
 import { Notifier } from '../../core/notifier';
 import { Badge } from '../../shared/badge';
 import { DashboardFilters, DashboardState, DEFAULT_FILTERS } from './dashboard-state';
+import { NewOutageDialog } from './new-outage-dialog';
 
 const EMPTY_PAGE: PagedResult<OutageSummary> = { items: [], page: 1, pageSize: 25, totalCount: 0, totalPages: 0 };
 
@@ -70,6 +72,7 @@ export class Dashboard {
   private readonly api = inject(OutageApi);
   private readonly notifier = inject(Notifier);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
   protected readonly state = inject(DashboardState);
 
   protected readonly boroughs = BOROUGHS;
@@ -93,7 +96,6 @@ export class Dashboard {
 
   private readonly sort$ = new BehaviorSubject<Sort>(this.state.sort());
   private readonly page$ = new Subject<PageEvent>();
-  private readonly refresh$ = new Subject<void>();
 
   protected readonly loading = signal(true);
 
@@ -117,10 +119,10 @@ export class Dashboard {
   );
 
   protected readonly result = toSignal(
-    combineLatest([this.query$, this.refresh$.pipe(startWith(undefined))]).pipe(
+    this.query$.pipe(
       tap(() => this.loading.set(true)),
       // switchMap cancels the previous request -> a slow old response can't overwrite newer results
-      switchMap(([query]) =>
+      switchMap((query) =>
         this.api.list(query).pipe(
           catchError((err) => {
             this.notifier.error(err);
@@ -145,6 +147,17 @@ export class Dashboard {
 
   protected clearFilters() {
     this.form.reset(DEFAULT_FILTERS);
+  }
+
+  protected newOutage() {
+    this.dialog
+      .open(NewOutageDialog, { width: '560px' })
+      .afterClosed()
+      .subscribe((created) => {
+        if (!created) return;
+        this.notifier.success('Outage created');
+        this.router.navigate(['/outages', created.id]);
+      });
   }
 
   protected open(outage: OutageSummary) {
