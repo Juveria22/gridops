@@ -9,7 +9,7 @@ namespace GridOps.Api.Services;
 public static class Projections
 {
     public static readonly Expression<Func<WorkOrder, WorkOrderDto>> WorkOrder = w => new WorkOrderDto(
-        w.Id, w.OutageId, w.Title, w.Notes, w.Status, w.Priority,
+        w.Id, w.OutageId, w.Outage.Title, w.Outage.Borough, w.Outage.Neighborhood, w.Title, w.Notes, w.Status, w.Priority,
         w.CrewId, w.Crew != null ? w.Crew.Name : null,
         w.CompletedAt, w.CreatedAt, w.UpdatedAt);
 
