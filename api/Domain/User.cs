@@ -1,11 +1,14 @@
 namespace GridOps.Api.Domain;
 
-// password hash added with auth in phase 4
 public class User : ITimestamped
 {
     public int Id { get; set; }
     public required string Email { get; set; }
     public required string DisplayName { get; set; }
+
+    // PBKDF2 hash + salt from PasswordHasher. never the plain password
+    public string PasswordHash { get; set; } = "";
+
     public UserRole Role { get; set; }
 
     // only set for crew members

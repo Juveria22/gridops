@@ -10,6 +10,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.Property(u => u.Email).HasMaxLength(256);
         builder.Property(u => u.DisplayName).HasMaxLength(100);
+        builder.Property(u => u.PasswordHash).HasMaxLength(200);
 
         // used for login lookup + no duplicate accounts
         builder.HasIndex(u => u.Email).IsUnique();
