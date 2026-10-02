@@ -60,6 +60,34 @@ Prerequisites: .NET 10 SDK, Node 22+, Docker Desktop (WSL 2 backend on Windows).
    - OpenAPI document: http://localhost:5257/openapi/v1.json
    - Health (includes a database check): http://localhost:5257/health
 
+5. **Run the client** (Node 22.22+ or 24)
+
+   ```bash
+   cd client
+   npm install
+   npm start          # http://localhost:4200, /api proxied to :5257
+   ```
+
+   Sign in with a demo account (buttons on the login page).
+
+## Client
+
+Angular 22 standalone components, Angular Material, signals for state, RxJS for streams.
+
+| Route | Role | |
+|---|---|---|
+| `/login` | anyone | demo account shortcuts |
+| `/dashboard` | Dispatcher | outage table: search, status/priority/borough/date filters, sort, paging, new outage dialog |
+| `/outages/:id` | Dispatcher | details, status changes, work orders, add + assign |
+| `/work-orders/:id` | both | crew: start/complete. dispatcher: also reassign/cancel |
+| `/my-work` | Crew | own crew's active + completed work, quick start/complete |
+
+- `authInterceptor` adds the bearer token to API calls only. 401 -> logout + "session expired"
+- `authGuard` / `roleGuard` redirect by login and role. UX only, the API enforces access
+- dashboard filters: `debounceTime(300)` -> `distinctUntilChanged` -> `switchMap` (cancels stale requests). typing "Brooklyn" sends 1 request, not 8
+- pages are lazy loaded (`loadComponent`)
+- token kept in localStorage so refresh keeps you signed in (trade-off: XSS-readable; httpOnly cookie is the stricter option)
+
 ## Data model
 
 - **Outage**: borough, neighborhood, customers affected, status, priority, reported/resolved times. Has many work orders.
