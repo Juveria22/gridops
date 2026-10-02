@@ -17,6 +17,14 @@ public class GlobalExceptionHandler(
             {
                 Status = StatusCodes.Status404NotFound, Title = "Not found", Detail = exception.Message,
             },
+            UnauthorizedException => new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized, Title = "Unauthorized", Detail = exception.Message,
+            },
+            ForbiddenException => new ProblemDetails
+            {
+                Status = StatusCodes.Status403Forbidden, Title = "Forbidden", Detail = exception.Message,
+            },
             ConflictException => new ProblemDetails
             {
                 Status = StatusCodes.Status409Conflict, Title = "Conflict", Detail = exception.Message,
