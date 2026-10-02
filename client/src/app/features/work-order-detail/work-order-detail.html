@@ -1,0 +1,88 @@
+@if (workOrder.isLoading() && !workOrder.hasValue()) {
+  <mat-progress-bar mode="indeterminate" />
+} @else if (workOrder.error()) {
+  <a mat-button [routerLink]="auth.isDispatcher() ? '/dashboard' : '/my-work'" class="back">
+    <mat-icon>arrow_back</mat-icon> Back
+  </a>
+  <p class="error">{{ errorMessage(workOrder.error()) }}</p>
+} @else if (workOrder.value(); as w) {
+  <a mat-button [routerLink]="backLink()" class="back">
+    <mat-icon>arrow_back</mat-icon> {{ auth.isDispatcher() ? 'Outage' : 'My work' }}
+  </a>
+
+  <header>
+    <p class="eyebrow">Work order #{{ w.id }}</p>
+    <h1>{{ w.title }}</h1>
+    <div class="badges">
+      <app-badge [value]="w.priority" />
+      <app-badge [value]="w.status" />
+    </div>
+  </header>
+
+  <section class="facts">
+    <div>
+      <span class="label">Outage</span>
+      @if (auth.isDispatcher()) {
+        <a [routerLink]="['/outages', w.outageId]">{{ w.outageTitle }}</a>
+      } @else {
+        {{ w.outageTitle }}
+      }
+    </div>
+    <div><span class="label">Location</span>{{ w.neighborhood }}, {{ boroughLabel(w.borough) }}</div>
+    <div><span class="label">Crew</span>{{ w.crewName ?? 'Unassigned' }}</div>
+    <div><span class="label">Created</span>{{ w.createdAt | date: 'MMM d, y, h:mm a' }}</div>
+    @if (w.completedAt) {
+      <div><span class="label">Completed</span>{{ w.completedAt | date: 'MMM d, y, h:mm a' }}</div>
+    }
+  </section>
+
+  @if (w.notes) {
+    <p class="notes">{{ w.notes }}</p>
+  }
+
+  @if (!isFinished()) {
+    <section class="card">
+      <h2>Actions</h2>
+      <div class="actions">
+        @if (w.status === 'Assigned') {
+          <button mat-flat-button [disabled]="saving()" (click)="setStatus('InProgress', 'Work started')">
+            <mat-icon>play_arrow</mat-icon> Start work
+          </button>
+        }
+        @if (w.status === 'InProgress') {
+          <button mat-flat-button [disabled]="saving()" (click)="setStatus('Completed', 'Work completed')">
+            <mat-icon>check</mat-icon> Mark completed
+          </button>
+        }
+        @if (auth.isDispatcher()) {
+          <button mat-stroked-button [disabled]="saving()" (click)="setStatus('Cancelled', 'Work order cancelled')">
+            Cancel work order
+          </button>
+        }
+      </div>
+
+      @if (auth.isDispatcher()) {
+        <mat-form-field appearance="outline" class="crew-select">
+          <mat-label>Assigned crew</mat-label>
+          <mat-select
+            [ngModel]="w.crewId"
+            (ngModelChange)="assignCrew($event)"
+            [disabled]="saving() || w.status === 'InProgress'"
+          >
+            <mat-option [value]="null">Unassigned</mat-option>
+            @for (c of crews.value(); track c.id) {
+              <mat-option [value]="c.id">{{ c.name }} · {{ c.openWorkOrders }} open</mat-option>
+            }
+          </mat-select>
+          @if (w.status === 'InProgress') {
+            <mat-hint>Can't change crew while work is in progress</mat-hint>
+          }
+        </mat-form-field>
+      }
+
+      @if (w.status === 'Open' && !auth.isDispatcher()) {
+        <p class="hint">Waiting for a dispatcher to assign a crew.</p>
+      }
+    </section>
+  }
+}
