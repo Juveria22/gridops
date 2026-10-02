@@ -6,6 +6,8 @@ namespace GridOps.Api.Tests.Infrastructure;
 [Collection(DatabaseCollection.Name)]
 public abstract class DatabaseTest(SqlServerFixture fixture) : IAsyncLifetime
 {
+    protected SqlServerFixture Fixture { get; } = fixture;
+
     protected static readonly DateTimeOffset Now = new(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
 
     // frozen clock -> exact timestamps in asserts
@@ -13,7 +15,7 @@ public abstract class DatabaseTest(SqlServerFixture fixture) : IAsyncLifetime
 
     // new context per arrange/act/assert, like separate HTTP requests.
     // stops tests passing only because EF already had the entity in memory
-    protected GridOpsDbContext NewDb() => fixture.CreateDbContext();
+    protected GridOpsDbContext NewDb() => Fixture.CreateDbContext();
 
     protected async Task SeedAsync(params object[] entities)
     {
@@ -22,7 +24,7 @@ public abstract class DatabaseTest(SqlServerFixture fixture) : IAsyncLifetime
         await db.SaveChangesAsync();
     }
 
-    public Task InitializeAsync() => fixture.ResetAsync();
+    public Task InitializeAsync() => Fixture.ResetAsync();
 
     public Task DisposeAsync() => Task.CompletedTask;
 }
