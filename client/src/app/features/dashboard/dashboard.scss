@@ -30,6 +30,10 @@
     width: 260px;
   }
 
+  .dates {
+    width: 250px;
+  }
+
   button {
     margin-top: 10px;
   }
@@ -89,7 +93,8 @@ table {
 
 @media (max-width: 600px) {
   .filters mat-form-field,
-  .filters .search {
+  .filters .search,
+  .filters .dates {
     width: 100%;
   }
 }
