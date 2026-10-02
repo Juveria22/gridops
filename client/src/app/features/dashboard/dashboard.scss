@@ -1,0 +1,95 @@
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  h1 {
+    margin: 0;
+    font: var(--mat-sys-headline-small);
+  }
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0 12px;
+
+  mat-form-field {
+    width: 170px;
+  }
+
+  .search {
+    width: 260px;
+  }
+
+  button {
+    margin-top: 10px;
+  }
+}
+
+.table-card {
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--mat-sys-surface);
+}
+
+.loading {
+  height: 3px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}
+
+.row {
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--mat-sys-surface-container);
+    outline: none;
+  }
+}
+
+.title {
+  font-weight: 500;
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.num {
+  text-align: right;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (max-width: 600px) {
+  .filters mat-form-field,
+  .filters .search {
+    width: 100%;
+  }
+}

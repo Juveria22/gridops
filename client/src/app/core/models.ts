@@ -86,6 +86,7 @@ export interface OutageQuery {
   status?: OutageStatus[];
   priority?: Priority[];
   borough?: Borough[];
+  search?: string;
   from?: string;
   to?: string;
   sortBy?: OutageSortField;
