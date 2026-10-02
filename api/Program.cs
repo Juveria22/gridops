@@ -3,7 +3,9 @@ using System.Text.Json.Serialization;
 using GridOps.Api.Common.Errors;
 using GridOps.Api.Data;
 using GridOps.Api.Data.Seeding;
+using GridOps.Api.Domain;
 using GridOps.Api.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +21,7 @@ builder.Services.AddDbContext<GridOpsDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddScoped<DevDataSeeder>();
+builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 
 // scoped like DbContext - one per request
 builder.Services.AddScoped<IOutageService, OutageService>();

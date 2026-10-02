@@ -1,12 +1,16 @@
 using GridOps.Api.Domain;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace GridOps.Api.Data.Seeding;
 
 // dev/benchmark data. fixed random seed -> same data every run
-public class DevDataSeeder(GridOpsDbContext db, ILogger<DevDataSeeder> logger)
+public class DevDataSeeder(GridOpsDbContext db, IPasswordHasher<User> hasher, ILogger<DevDataSeeder> logger)
 {
     private const int BatchSize = 2000;
+
+    // dev only. every seeded user gets this password (see README)
+    public const string DemoPassword = "GridOps-Demo-2026!";
 
     private readonly Random _rng = new(42);
     private readonly DateTimeOffset _now = DateTimeOffset.UtcNow;
@@ -110,6 +114,10 @@ public class DevDataSeeder(GridOpsDbContext db, ILogger<DevDataSeeder> logger)
         var emails = new HashSet<string>();
         var users = new List<User>();
 
+        // fixed logins for demos
+        users.Add(CreateUser(UserRole.Dispatcher, null, emails, "dispatcher@gridops.example.com", "Demo Dispatcher"));
+        users.Add(CreateUser(UserRole.Crew, crews[0], emails, "crew@gridops.example.com", "Demo Crew Member"));
+
         for (var i = 0; i < 4; i++)
             users.Add(CreateUser(UserRole.Dispatcher, null, emails));
 
@@ -122,23 +130,26 @@ public class DevDataSeeder(GridOpsDbContext db, ILogger<DevDataSeeder> logger)
         return users;
     }
 
-    private User CreateUser(UserRole role, Crew? crew, HashSet<string> emails)
+    private User CreateUser(UserRole role, Crew? crew, HashSet<string> emails, string? email = null, string? name = null)
     {
         var first = Pick(FirstNames);
         var last = Pick(LastNames);
 
-        var email = $"{first}.{last}@gridops.example.com".ToLowerInvariant();
+        email ??= $"{first}.{last}@gridops.example.com".ToLowerInvariant();
         for (var n = 2; !emails.Add(email); n++)
             email = $"{first}.{last}{n}@gridops.example.com".ToLowerInvariant();
 
-        return new User
+        var user = new User
         {
             Email = email,
-            DisplayName = $"{first} {last}",
+            DisplayName = name ?? $"{first} {last}",
             Role = role,
             Crew = crew,
             CreatedAt = _now.AddYears(-2),
         };
+        // hashed per user -> each gets its own salt
+        user.PasswordHash = hasher.HashPassword(user, DemoPassword);
+        return user;
     }
 
     private Outage CreateOutage(Dictionary<Borough, Crew[]> crewsByBorough, Crew[] allCrews)
