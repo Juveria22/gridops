@@ -138,3 +138,6 @@ app.MapControllers();
 app.MapHealthChecks("/health").AllowAnonymous(); // App Service probes without a token
 
 app.Run();
+
+// lets WebApplicationFactory<Program> in api.tests find the entry point
+public partial class Program;
