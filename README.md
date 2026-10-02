@@ -29,13 +29,16 @@ Prerequisites: .NET 10 SDK, Node 22+, Docker Desktop (WSL 2 backend on Windows).
    docker compose up -d
    ```
 
-2. **Set the connection string with user secrets** (kept out of source control, stored under your user profile):
+2. **Set secrets** (kept out of source control, stored under your user profile): the connection string and a JWT signing key (32+ bytes).
 
    ```bash
    dotnet user-secrets set "ConnectionStrings:GridOps" \
      "Server=localhost,1433;Database=GridOps;User Id=sa;Password=<your password>;TrustServerCertificate=True;Encrypt=True" \
      --project api
+   dotnet user-secrets set "Jwt:SigningKey" "$(openssl rand -base64 48)" --project api
    ```
+
+   The API refuses to start if either is missing.
 
 3. **Create the database and seed dev data**
 
@@ -66,10 +69,40 @@ Prerequisites: .NET 10 SDK, Node 22+, Docker Desktop (WSL 2 backend on Windows).
 
 Enums are stored as strings. All timestamps are UTC `datetimeoffset`.
 
+## Auth
+
+JWT bearer tokens. Log in, then send `Authorization: Bearer <token>`. Tokens last 2 hours. In Swagger UI use **Authorize**.
+
+```bash
+curl -X POST http://localhost:5257/api/auth/login -H "Content-Type: application/json"   -d '{"email":"dispatcher@gridops.example.com","password":"GridOps-Demo-2026!"}'
+```
+
+Seeded demo accounts (Development only, all seeded users share this password):
+
+| Email | Role |
+|---|---|
+| `dispatcher@gridops.example.com` | Dispatcher |
+| `crew@gridops.example.com` | Crew (Manhattan Overhead 1) |
+
+| | Dispatcher | Crew |
+|---|---|---|
+| Outages (list, view, create, status) | yes | no (403) |
+| Crews list | yes | no (403) |
+| Create work order, assign crew | yes | no (403) |
+| List / view work orders | all | own crew only. others return 404 |
+| Update work order status | any | own crew, InProgress/Completed only |
+
+- every endpoint requires a token unless marked `[AllowAnonymous]` (login, `/health`, OpenAPI doc)
+- passwords hashed with ASP.NET Core `PasswordHasher` (PBKDF2, per-user salt)
+- login rate limited to 5 attempts/min per IP (429 + `Retry-After`)
+- same 401 for unknown email and wrong password
+
 ## API
 
 | Method | Route | Notes |
 |---|---|---|
+| POST | `/api/auth/login` | anonymous. returns `{ accessToken, expiresAt, user }` |
+| GET | `/api/auth/me` | current user |
 | GET | `/api/outages` | filters: `status`, `priority`, `borough` (repeatable), `from`, `to`. `sortBy` = reportedAt / priority / customersAffected, `sortDir`, `page`, `pageSize` (max 100) |
 | GET | `/api/outages/{id}` | includes work orders |
 | POST | `/api/outages` | 201 + Location |
@@ -92,8 +125,11 @@ All errors are [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457) with a `
 | Status | When |
 |---|---|
 | 400 | validation failed. `errors` has camelCase field names |
+| 401 | missing/invalid/expired token, or bad login |
+| 403 | logged in but wrong role |
 | 404 | resource not found |
 | 409 | valid request but breaks a business rule (e.g. resolving with open work orders) |
+| 429 | too many login attempts |
 | 500 | unexpected. no internals outside Development |
 
 ```json
