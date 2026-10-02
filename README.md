@@ -165,6 +165,25 @@ All errors are [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457) with a `
   "errors": { "pageSize": ["The field PageSize must be between 1 and 100."] }, "traceId": "00-..." }
 ```
 
-## Performance
+## Tests
+
+```bash
+dotnet test        # needs Docker running
+```
+
+51 xUnit tests against a real SQL Server 2022 in a throwaway container ([Testcontainers](https://dotnet.testcontainers.org/)) with the real EF migrations. ~45s including container startup.
+
+| | |
+|---|---|
+| `Services/OutageServiceTests` | resolve rules, filters, date range, priority severity sort, stable paging |
+| `Services/WorkOrderServiceTests` | crew ownership, crew-without-crew sees nothing, status rules, crew assignment |
+| `Services/AuthServiceTests` | login, token claims, same error for bad email/password, per-user salt |
+| `Api/ApiEndpointTests` | full HTTP pipeline via `WebApplicationFactory`: 401/403/404/409/400/429, tampered token, query binding, enum JSON |
+
+- not EF InMemory / SQLite: they don't run real SQL (string-enum priority ranking, `DateTimeOffset` ordering, constraints)
+- [Respawn](https://github.com/jbogard/Respawn) wipes data before each test, so order doesn't matter
+- `FakeTimeProvider` + `FakeCurrentUser` replace the clock and the JWT user in service tests
+- key tests were checked to fail when the code they guard is removed (e.g. the paging tie-breaker, the null-crew guard)
+
 
 Composite indexes on the dashboard filters cut the main dashboard query from 17.9 ms to 1.7 ms and pages read by 98% on 200k outages. Method and numbers in [benchmarks/README.md](benchmarks/README.md).
