@@ -1,0 +1,49 @@
+<header class="header">
+  <div>
+    <h1>My work</h1>
+    <p class="subtitle">{{ auth.user()?.crewName ?? 'Not assigned to a crew' }}</p>
+  </div>
+  <mat-button-toggle-group [value]="tab()" (change)="tab.set($event.value)" aria-label="Show">
+    <mat-button-toggle value="active">Active</mat-button-toggle>
+    <mat-button-toggle value="done">Completed</mat-button-toggle>
+  </mat-button-toggle-group>
+</header>
+
+@if (workOrders.isLoading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (workOrders.error()) {
+  <p class="error">{{ errorMessage(workOrders.error()) }}</p>
+} @else if (!workOrders.isLoading() && items().length === 0) {
+  <p class="empty">{{ tab() === 'active' ? 'Nothing assigned right now.' : 'No completed work yet.' }}</p>
+}
+
+<ul class="cards">
+  @for (w of items(); track w.id) {
+    <li class="card">
+      <div class="badges">
+        <app-badge [value]="w.priority" />
+        <app-badge [value]="w.status" />
+      </div>
+      <a class="title" [routerLink]="['/work-orders', w.id]">{{ w.title }}</a>
+      <p class="outage">{{ w.outageTitle }}</p>
+      <p class="meta">
+        <mat-icon inline>place</mat-icon> {{ w.neighborhood }}, {{ boroughLabel(w.borough) }}
+      </p>
+      @if (w.completedAt) {
+        <p class="meta">Completed {{ w.completedAt | date: 'MMM d, h:mm a' }}</p>
+      }
+
+      @if (w.status === 'Assigned') {
+        <button mat-flat-button [disabled]="busyId() === w.id" (click)="setStatus(w, 'InProgress')">
+          <mat-icon>play_arrow</mat-icon> Start
+        </button>
+      } @else if (w.status === 'InProgress') {
+        <button mat-flat-button [disabled]="busyId() === w.id" (click)="setStatus(w, 'Completed')">
+          <mat-icon>check</mat-icon> Complete
+        </button>
+      }
+    </li>
+  }
+</ul>
