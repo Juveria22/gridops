@@ -1,0 +1,49 @@
+<main class="login-page">
+  <mat-card class="login-card" appearance="outlined">
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <mat-card-header>
+      <mat-card-title>GridOps</mat-card-title>
+      <mat-card-subtitle>Outage and work order tracker</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (reason() === 'expired') {
+        <p class="notice">Your session expired. Please sign in again.</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" autocomplete="username" />
+          @if (form.controls.email.hasError('email')) {
+            <mat-error>Enter a valid email</mat-error>
+          } @else if (form.controls.email.hasError('required')) {
+            <mat-error>Email is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password" autocomplete="current-password" />
+          @if (form.controls.password.hasError('required')) {
+            <mat-error>Password is required</mat-error>
+          }
+        </mat-form-field>
+
+        @if (error()) {
+          <p class="error" role="alert">{{ error() }}</p>
+        }
+
+        <button mat-flat-button type="submit" [disabled]="loading()">Sign in</button>
+      </form>
+    </mat-card-content>
+
+    <mat-card-footer class="demo">
+      <span>Demo accounts:</span>
+      <button mat-button type="button" (click)="useDemo('dispatcher@gridops.example.com')">Dispatcher</button>
+      <button mat-button type="button" (click)="useDemo('crew@gridops.example.com')">Crew</button>
+    </mat-card-footer>
+  </mat-card>
+</main>
