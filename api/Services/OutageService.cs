@@ -29,6 +29,12 @@ public class OutageService(GridOpsDbContext db, TimeProvider clock) : IOutageSer
             outages = outages.Where(o => query.Priority.Contains(o.Priority));
         if (query.Borough is { Length: > 0 })
             outages = outages.Where(o => query.Borough.Contains(o.Borough));
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            // LIKE '%term%' - can't use an index, fine for a few hundred k rows
+            var term = query.Search.Trim();
+            outages = outages.Where(o => o.Title.Contains(term) || o.Neighborhood.Contains(term));
+        }
         if (query.From is not null)
             outages = outages.Where(o => o.ReportedAt >= query.From);
         if (query.To is not null)

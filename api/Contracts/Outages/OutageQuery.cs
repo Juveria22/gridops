@@ -19,6 +19,10 @@ public class OutageQuery : PageQuery, IValidatableObject
     public Priority[]? Priority { get; init; }
     public Borough[]? Borough { get; init; }
 
+    // matches title or neighborhood
+    [MaxLength(100)]
+    public string? Search { get; init; }
+
     public DateTimeOffset? From { get; init; }
     public DateTimeOffset? To { get; init; }
 
