@@ -64,6 +64,7 @@
       [matSortActive]="state.sort().active"
       [matSortDirection]="state.sort().direction"
       matSortDisableClear
+      matSortStart="desc"
       (matSortChange)="onSort($event)"
     >
       <ng-container matColumnDef="priority">

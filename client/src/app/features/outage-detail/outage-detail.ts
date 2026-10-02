@@ -56,15 +56,17 @@ export class OutageDetailPage {
 
   // crews from the outage's borough first, least busy first
   protected readonly sortedCrews = computed(() => {
-    const borough = this.outage.value()?.borough;
-    return [...(this.crews.value() ?? [])].sort(
+    // value() throws in error state -> check hasValue first
+    const borough = this.outage.hasValue() ? this.outage.value().borough : undefined;
+    const crews = this.crews.hasValue() ? this.crews.value() : [];
+    return [...crews].sort(
       (a, b) =>
         Number(b.homeBorough === borough) - Number(a.homeBorough === borough) ||
         a.openWorkOrders - b.openWorkOrders,
     );
   });
 
-  protected readonly isResolved = computed(() => this.outage.value()?.status === 'Resolved');
+  protected readonly isResolved = computed(() => this.outage.hasValue() && this.outage.value().status === 'Resolved');
   protected readonly saving = signal(false);
   protected readonly boroughLabel = boroughLabel;
   protected readonly errorMessage = errorMessage;

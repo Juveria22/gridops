@@ -47,7 +47,8 @@ export class MyWork {
 
   // active: most urgent first, in-progress above not started
   protected readonly items = computed(() => {
-    const items = this.workOrders.value()?.items ?? [];
+    // value() throws while the resource is in an error state
+    const items = this.workOrders.hasValue() ? this.workOrders.value().items : [];
     if (this.tab() === 'done') return items;
     return [...items].sort(
       (a, b) =>

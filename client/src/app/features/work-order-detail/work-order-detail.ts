@@ -56,12 +56,13 @@ export class WorkOrderDetailPage {
   protected readonly errorMessage = errorMessage;
 
   protected readonly isFinished = computed(() => {
-    const status = this.workOrder.value()?.status;
+    if (!this.workOrder.hasValue()) return false; // value() throws in error state
+    const status = this.workOrder.value().status;
     return status === 'Completed' || status === 'Cancelled';
   });
 
   protected readonly backLink = computed(() =>
-    this.auth.isDispatcher() ? ['/outages', this.workOrder.value()?.outageId] : ['/my-work'],
+    this.auth.isDispatcher() && this.workOrder.hasValue() ? ['/outages', this.workOrder.value().outageId] : ['/my-work'],
   );
 
   protected setStatus(status: WorkOrderStatus, message: string) {

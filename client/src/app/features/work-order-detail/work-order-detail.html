@@ -70,7 +70,7 @@
             [disabled]="saving() || w.status === 'InProgress'"
           >
             <mat-option [value]="null">Unassigned</mat-option>
-            @for (c of crews.value(); track c.id) {
+            @for (c of crews.hasValue() ? crews.value() : []; track c.id) {
               <mat-option [value]="c.id">{{ c.name }} · {{ c.openWorkOrders }} open</mat-option>
             }
           </mat-select>
