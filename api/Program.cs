@@ -9,6 +9,7 @@ using GridOps.Api.Data.Seeding;
 using GridOps.Api.Domain;
 using GridOps.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
@@ -45,7 +46,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.FromSeconds(30), // default is 5 min of grace after expiry
         };
     });
-builder.Services.AddAuthorization();
+// secure by default: every endpoint needs a valid token unless marked [AllowAnonymous]
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
 // brute force protection: 5 login attempts per minute per IP
 builder.Services.AddRateLimiter(options =>
@@ -117,7 +120,7 @@ app.UseStatusCodePages(); // empty 404/405 etc -> ProblemDetails
 if (app.Environment.IsDevelopment())
 {
     // Built-in generator serves the OpenAPI document; Swashbuckle's UI renders it.
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/openapi/v1.json", "GridOps API v1");
@@ -132,6 +135,6 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health").AllowAnonymous(); // App Service probes without a token
 
 app.Run();

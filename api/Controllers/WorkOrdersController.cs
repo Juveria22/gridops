@@ -1,12 +1,15 @@
+using GridOps.Api.Auth;
 using GridOps.Api.Common.Paging;
 using GridOps.Api.Contracts.WorkOrders;
 using GridOps.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GridOps.Api.Controllers;
 
 [ApiController]
 [Route("api/work-orders")]
+[Authorize] // both roles. crew only sees own work - enforced in WorkOrderService
 public class WorkOrdersController(IWorkOrderService workOrders) : ControllerBase
 {
     [HttpGet]
@@ -20,6 +23,7 @@ public class WorkOrdersController(IWorkOrderService workOrders) : ControllerBase
 
     // nested route - a work order always belongs to an outage
     [HttpPost("/api/outages/{outageId:int}/work-orders")]
+    [Authorize(Roles = Roles.Dispatcher)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -31,6 +35,7 @@ public class WorkOrdersController(IWorkOrderService workOrders) : ControllerBase
     }
 
     [HttpPut("{id:int}/crew")]
+    [Authorize(Roles = Roles.Dispatcher)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

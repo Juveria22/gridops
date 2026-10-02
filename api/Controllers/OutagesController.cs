@@ -1,6 +1,8 @@
+using GridOps.Api.Auth;
 using GridOps.Api.Common.Paging;
 using GridOps.Api.Contracts.Outages;
 using GridOps.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GridOps.Api.Controllers;
@@ -8,6 +10,7 @@ namespace GridOps.Api.Controllers;
 // [ApiController]: auto 400 on invalid input, binds body from JSON
 [ApiController]
 [Route("api/outages")]
+[Authorize(Roles = Roles.Dispatcher)]
 public class OutagesController(IOutageService outages) : ControllerBase
 {
     [HttpGet]
