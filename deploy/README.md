@@ -52,7 +52,7 @@ az ad app delete --id <AZURE_CLIENT_ID>
 
 `.github/workflows/ci-cd.yml`
 
-- `api`: build + 51 tests (SQL Server via Testcontainers)
+- `api`: build + 53 tests (SQL Server via Testcontainers)
 - `client`: `ng build --configuration production`
 - `package`: `dotnet publish` + Angular build into `wwwroot`, EF migrations bundle
 - `deploy` (only when `AZURE_DEPLOY_ENABLED=true`): OIDC login, open SQL firewall to the runner, apply migrations, close firewall, deploy, `/health` check

@@ -173,7 +173,7 @@ All errors are [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457) with a `
 dotnet test        # needs Docker running
 ```
 
-51 xUnit tests against a real SQL Server 2022 in a throwaway container ([Testcontainers](https://dotnet.testcontainers.org/)) with the real EF migrations. ~45s including container startup.
+53 xUnit tests against a real SQL Server 2022 in a throwaway container ([Testcontainers](https://dotnet.testcontainers.org/)) with the real EF migrations. ~45s including container startup.
 
 | | |
 |---|---|
