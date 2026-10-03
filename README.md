@@ -4,11 +4,34 @@
 
 Outage and work order tracker for an electric utility. Dispatchers log outages and assign work orders to field crews; crews see and update their own work.
 
+![Dispatcher dashboard](docs/screenshots/02-dashboard.png)
+
+## Highlights
+
+- **~10x faster dashboard query** (17.9 ms -> 1.7 ms, 98% fewer pages read) on 200k outages with composite SQL Server indexes, verified against execution plans ([benchmark](benchmarks/README.md))
+- **JWT auth with two layers of authorization**: role-based (Dispatcher / Crew) plus per-row ownership, so crews only ever see their own crew's work
+- **53 xUnit tests against real SQL Server** (Testcontainers), including full-pipeline HTTP tests. Key tests checked to fail when the code they guard is removed
+- **Angular 22** with signals, lazy-loaded routes (89 kB initial load) and an RxJS `debounceTime` / `switchMap` filter pipeline: typing a search sends 1 request, not 8
+- **CI/CD on every push**: tests, production build, deployable package with an EF migrations bundle, gated Azure deploy using OIDC
+
+## Screenshots
+
+| Outage detail | Work order |
+|---|---|
+| ![Outage detail with work orders](docs/screenshots/03-outage-detail.png) | ![Work order with dispatcher actions](docs/screenshots/04-work-order.png) |
+
+| New outage | Crew view | Crew on a phone |
+|---|---|---|
+| ![New outage dialog](docs/screenshots/05-new-outage.png) | ![Crew My work](docs/screenshots/06-crew-my-work.png) | ![Crew view on mobile](docs/screenshots/07-crew-mobile.png) |
+
+Login has one-click demo accounts for both roles: ![Login](docs/screenshots/01-login.png)
+
 ## Stack
 
-- **API:** ASP.NET Core Web API (.NET 10 LTS), Entity Framework Core, SQL Server
-- **Client:** Angular (standalone components), Angular Material, RxJS
-- **Tests:** xUnit
+- **API:** ASP.NET Core Web API (.NET 10 LTS), Entity Framework Core 10, SQL Server
+- **Client:** Angular 22 (standalone components, signals), Angular Material, RxJS
+- **Tests:** xUnit, Testcontainers, Respawn, `WebApplicationFactory`
+- **CI/CD:** GitHub Actions. Azure App Service + Azure SQL ready ([deploy guide](deploy/README.md))
 - **Local infra:** SQL Server 2022 in Docker
 
 ## Repo layout
