@@ -24,7 +24,9 @@ Outage and work order tracker for an electric utility. Dispatchers log outages a
 |---|---|---|
 | ![New outage dialog](docs/screenshots/05-new-outage.png) | ![Crew My work](docs/screenshots/06-crew-my-work.png) | ![Crew view on mobile](docs/screenshots/07-crew-mobile.png) |
 
-Login has one-click demo accounts for both roles: ![Login](docs/screenshots/01-login.png)
+| Login (one-click demo accounts) |
+|---|
+| ![Login](docs/screenshots/01-login.png) |
 
 ## Stack
 
