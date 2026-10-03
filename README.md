@@ -1,5 +1,7 @@
 # GridOps
 
+[![CI/CD](https://github.com/Juveria22/gridops/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Juveria22/gridops/actions/workflows/ci-cd.yml)
+
 Outage and work order tracker for an electric utility. Dispatchers log outages and assign work orders to field crews; crews see and update their own work.
 
 ## Stack
