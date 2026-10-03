@@ -75,6 +75,15 @@ public class ApiEndpointTests(SqlServerFixture fixture) : DatabaseTest(fixture)
     }
 
     [Fact]
+    public async Task Unknown_api_route_is_a_404_problem_not_the_spa_page()
+    {
+        var response = await ClientFor(null).GetAsync("/api/does-not-exist");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await ProblemAsync(response);
+    }
+
+    [Fact]
     public async Task Health_check_is_public()
     {
         var response = await ClientFor(null).GetAsync("/health");

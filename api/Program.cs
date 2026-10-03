@@ -144,12 +144,20 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// prod: CI copies the Angular build into wwwroot -> one app, one origin, no CORS
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapControllers();
 app.MapHealthChecks("/health").AllowAnonymous(); // App Service probes without a token
+
+// unknown /api routes stay a 404, not the Angular page
+app.Map("/api/{**path}", () => Results.NotFound()).AllowAnonymous().ExcludeFromDescription();
+// anything else -> index.html so a refresh on /dashboard lets Angular's router handle it
+app.MapFallbackToFile("index.html").AllowAnonymous();
 
 app.Run();
 
