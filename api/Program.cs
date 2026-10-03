@@ -10,6 +10,7 @@ using GridOps.Api.Domain;
 using GridOps.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
@@ -49,6 +50,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // secure by default: every endpoint needs a valid token unless marked [AllowAnonymous]
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+
+// behind App Service's front end the TCP peer is the proxy, not the user.
+// read the real client IP + scheme from X-Forwarded-*. otherwise every user shares one rate limit bucket
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // App Service proxy IPs aren't fixed. ok because the app is only reachable through that proxy
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // brute force protection: 5 login attempts per minute per IP
 builder.Services.AddRateLimiter(options =>
@@ -114,6 +125,7 @@ if (args.Contains("seed"))
     return;
 }
 
+app.UseForwardedHeaders(); // first, so everything after sees the real IP/scheme
 app.UseExceptionHandler();
 app.UseStatusCodePages(); // empty 404/405 etc -> ProblemDetails
 

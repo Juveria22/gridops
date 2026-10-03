@@ -165,6 +165,30 @@ public class ApiEndpointTests(SqlServerFixture fixture) : DatabaseTest(fixture)
         Assert.Equal(HttpStatusCode.TooManyRequests, statuses[5]);
     }
 
+    [Fact]
+    public async Task Rate_limit_is_per_real_client_ip_behind_a_proxy()
+    {
+        // App Service's front end forwards the user's IP in X-Forwarded-For.
+        // without forwarded headers, every user would share the proxy's bucket
+        await using var api = new GridOpsApiFactory(Fixture.ConnectionString);
+        var client = api.CreateClient();
+
+        async Task<HttpStatusCode> LoginFrom(string ip)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, "/api/auth/login")
+            {
+                Content = JsonContent.Create(new { email = "x@test.com", password = "x" }),
+            };
+            request.Headers.Add("X-Forwarded-For", ip);
+            return (await client.SendAsync(request)).StatusCode;
+        }
+
+        for (var i = 0; i < 5; i++) await LoginFrom("203.0.113.10");
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, await LoginFrom("203.0.113.10"));
+        Assert.Equal(HttpStatusCode.Unauthorized, await LoginFrom("198.51.100.20")); // different user, not blocked
+    }
+
     // --- filtering over HTTP ---
 
     [Fact]
