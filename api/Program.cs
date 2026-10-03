@@ -25,7 +25,9 @@ var connectionString = builder.Configuration.GetConnectionString("GridOps")
     ?? throw new InvalidOperationException("Connection string 'GridOps' is not configured.");
 
 builder.Services.AddDbContext<GridOpsDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    // retry transient errors - Azure SQL free tier pauses when idle and drops connections while resuming
+    options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure(
+        maxRetryCount: 6, maxRetryDelay: TimeSpan.FromSeconds(10), errorNumbersToAdd: null)));
 
 // auth. signing key from user secrets locally, App Service config in Azure
 var jwt = builder.Configuration.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
